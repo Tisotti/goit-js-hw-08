@@ -1,33 +1,46 @@
-import Throttle from 'lodash.throttle';
+
+const throttle = require('lodash.throttle');
 
 const form = document.querySelector('.feedback-form');
+const email = document.querySelector('input[name="email"]');
+const message = document.querySelector('textarea[name="message"]');
 
-form.addEventListener('input', Throttle(onForm, 500));
-form.addEventListener('submit', onSubmitButton);
+const LOCALSTORAGE_KEY = "feedback-form-state";
 
-dataFromLocalStorage();
-let feedbackForm = {};
-function onForm(event) {
+let userData = {}
+
+const throttleFn = throttle(handleSubmit, 500)
+
+initForm()
+
+form.addEventListener('submit', throttleFn)
+
+function handleSubmit (event) {
+    event.preventDefault()
+  
+    const formData = new FormData(form)
+    formData.forEach((value, name) => { userData[name] = value })
+    console.log(userData);
+    event.currentTarget.reset()
+    localStorage.removeItem(LOCALSTORAGE_KEY)
+    userData = {}
    
-    const { name, value } = event.target;
-    feedbackForm[name] = value;
-    localStorage.setItem('feedback-form-state', JSON.stringify(feedbackForm));
-};
+}
 
-function onSubmitButton(event) {
-    event.preventDefault();
-    console.log(feedbackForm);
-    form.reset();
-    localStorage.removeItem('feedback-form-state');
-    
-};
+form.addEventListener('input', handleInput)
 
-function dataFromLocalStorage() {
-    const dataLocalStorage = JSON.parse(localStorage.getItem('feedback-form-state'));
-      if (dataLocalStorage) {
-          Object.entries(dataLocalStorage).forEach(([name,value]) =>{ 
-            form.elements[name].value = value;})
-       
-    };
+function handleInput (event) {
+    userData[event.target.name] = event.target.value
+    localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(userData));
+}
 
-};
+function initForm() {
+    let persistedData = localStorage.getItem(LOCALSTORAGE_KEY)
+    if (persistedData) {
+        persistedData = JSON.parse(persistedData)
+        Object.entries(persistedData).forEach(([name, value]) => {
+            userData[name] = value
+            form.elements[name].value = value
+        })
+}
+}

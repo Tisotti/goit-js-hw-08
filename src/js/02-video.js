@@ -1,14 +1,20 @@
 import Player from '@vimeo/player';
-import throttle from 'lodash.throttle';
+const throttle = require('lodash.throttle'); 
 
-const iframe = document.querySelector('iframe');
+const iframe = document.querySelector('#vimeo-player');
+const VIDEO_STORAGE_KEY = "videoplayer-current-time"
+const throttleOptim = throttle(onPlay, 1000)
 
-const player = new Player(iframe);
+const player = new Player(iframe)
 
-    player.on('timeupdate', throttle(playTime, 1000) );
+player.on('timeupdate', throttleOptim) 
 
-    function playTime({seconds}){   
-    localStorage.setItem("timeupdate", JSON.stringify(seconds));
-};
-    player.setCurrentTime(JSON.parse(localStorage.getItem('timeupdate')));
+function onPlay(data) {
+    localStorage.setItem(VIDEO_STORAGE_KEY, data.seconds)
+}
 
+const currentTime = localStorage.getItem(VIDEO_STORAGE_KEY)
+
+if (currentTime) {
+    player.setCurrentTime(currentTime)
+}
